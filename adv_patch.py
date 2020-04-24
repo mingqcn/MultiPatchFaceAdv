@@ -416,6 +416,7 @@ def crossover(patch_list, patch_list_0, prob_0):
     :return: the patch list for next generation
     """
     new_patch_list = []
+    patch_exist = False
     for patch in patch_list:
         patch_num = len(patch_list_0)
         while patch_num > -1 * patch_num:
@@ -427,7 +428,13 @@ def crossover(patch_list, patch_list_0, prob_0):
             patch_num -=1
         if patch_num > -1 * patch_num:
             new_patch_list.append(cross_patch)
-    return new_patch_list
+            patch_exist = True
+        else:
+            new_patch_list.append(np.zeros_like(patch))
+    if patch_exist:
+        return new_patch_list
+    else:
+        return []
 
 def create_patch(size, clusters, img, n_cluster):
     """
