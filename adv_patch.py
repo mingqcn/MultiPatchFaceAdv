@@ -417,14 +417,16 @@ def crossover(patch_list, patch_list_0, prob_0):
     """
     new_patch_list = []
     for patch in patch_list:
-        while True:
+        patch_num = len(patch_list_0)
+        while patch_num > -1 * patch_num:
             index = roulette(prob_0)
             if np.sum(np.multiply(patch, patch_list_0[index])) == 0:
                 #no overlap
                 cross_patch = np.add(patch, patch_list_0[index])
                 break
-
-        new_patch_list.append(cross_patch)
+            patch_num -=1
+        if patch_num > -1 * patch_num:
+            new_patch_list.append(cross_patch)
     return new_patch_list
 
 def create_patch(size, clusters, img, n_cluster):
@@ -503,8 +505,12 @@ def multiPatchAttack(args, img, clusters, session, positive_embedding, adv_filen
     success_loss = []
     name_list = []
     success = False
-    while not success:
+    while not success and num_patch < 20:
         new_patch_list = crossover(patch_list, patch_list_0, prob_0)
+        if len(new_patch_list) == 0:
+            # no new patches
+            break
+
         patches = np.stack(new_patch_list)
         losses, new_adv_imgs = generation(args, adv_imgs, patches, positive_embedding, model_dic, session)
         num_patch+=1
@@ -525,8 +531,8 @@ def multiPatchAttack(args, img, clusters, session, positive_embedding, adv_filen
         adv_img_list, patch_list = get_next_generation(new_adv_imgs, patch_list, losses, args.max_cluster)
         adv_imgs = np.stack(adv_img_list)
 
-
-    write_csv(name_list, success_loss, adv_filename + '_r%d.csv' % (args.size))
+    if success:
+        write_csv(name_list, success_loss, adv_filename + '_r%d.csv' % (args.size))
 
 def find_adv_image(args, grad_input, dir, img, name_list, session, positive_embedding, model_dic):
     """
@@ -724,15 +730,15 @@ def main(args):
 
             # Filter with threshold
             find_adv_image(args, norm_grad_input, grad_dir, feed_img, name_list, sess ,pos_embedding_np[0], model_dic)
-            find_adv_image(args, cam, cam_dir, feed_img, name_list, sess ,pos_embedding_np[0], model_dic)
+            #find_adv_image(args, cam, cam_dir, feed_img, name_list, sess ,pos_embedding_np[0], model_dic)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input_path', default='data/aligned',
+    parser.add_argument('--input_path', default='data/test',
                         type=str, help='Path to the image.' )  # p6;先用[250，250]的维度来进行操作
-    parser.add_argument('--output_path', default='data/dbscan_output',
+    parser.add_argument('--output_path', default='data/test_dbscan_output',
                         type=str, help='Path to the image.')
     parser.add_argument('--eps', type=int, default=2, help="eps for dbscan of the area")
     parser.add_argument('--min_samples', type=int, default=6, help="min samples for dbscan")
